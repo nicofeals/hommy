@@ -26,6 +26,7 @@ func startMotionSensorServerHandler(c *cli.Context) {
 	)
 
 	errHooks := hooks.ErrorLoggerHooks(log)
+
 	lights := map[motionsensor.LightPosition]string{
 		motionsensor.Corner:    "192.168.1.28:55443",
 		motionsensor.Ceiling:   "192.168.1.29:55443",

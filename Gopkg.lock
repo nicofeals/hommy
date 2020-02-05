@@ -180,6 +180,14 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b521f10a2d8fa85c04a8ef4e62f2d1e14d303599a55d64dabf9f5a02f84d35eb"
+  name = "golang.org/x/sync"
+  packages = ["errgroup"]
+  pruneopts = "UT"
+  revision = "cd5d95a43a6e21273425c7ae415d3df9ea832eeb"
+
+[[projects]]
+  branch = "master"
   digest = "1:459d8fab1c41af53e1bafa6ffa624168f0ef9ac048445bdcad0969306b608ec5"
   name = "golang.org/x/tools"
   packages = [
@@ -265,6 +273,7 @@
     "github.com/urfave/cli",
     "go.uber.org/zap",
     "go.uber.org/zap/zapcore",
+    "golang.org/x/sync/errgroup",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

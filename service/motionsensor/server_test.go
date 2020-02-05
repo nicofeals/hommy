@@ -32,14 +32,14 @@ func TestServerTestSuite(t *testing.T) {
 func (s *ServerTestSuite) TestDetectMotion_ComingIn() {
 	s.lc.On("TurnLightOn", mock.Anything).Return(nil)
 
-	res, err := s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.DetectMovementRequest_DOOR})
+	res, err := s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.Position_DOOR})
 	s.NoError(err)
 	s.Empty(res)
 	s.True(s.s.doorSensorActive)
 	s.False(s.s.deskSensorActive)
 	s.Equal(uint32(0), s.s.counter)
 
-	res, err = s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.DetectMovementRequest_DESK})
+	res, err = s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.Position_DESK})
 	s.NoError(err)
 	s.Empty(res)
 	s.False(s.s.doorSensorActive)
@@ -53,14 +53,14 @@ func (s *ServerTestSuite) TestDetectMotion_GoingOut() {
 	s.lc.On("TurnLightOff", mock.Anything).Return(nil)
 
 	s.s.counter = 4
-	res, err := s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.DetectMovementRequest_DESK})
+	res, err := s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.Position_DESK})
 	s.NoError(err)
 	s.Empty(res)
 	s.True(s.s.deskSensorActive)
 	s.False(s.s.doorSensorActive)
 	s.Equal(uint32(4), s.s.counter)
 
-	res, err = s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.DetectMovementRequest_DOOR})
+	res, err = s.s.DetectMovement(context.Background(), &pb.DetectMovementRequest{Position: pb.Position_DOOR})
 	s.NoError(err)
 	s.Empty(res)
 	s.False(s.s.doorSensorActive)

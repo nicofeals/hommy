@@ -2,6 +2,7 @@ package motionsensor
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/avarabyeu/yeelight"
@@ -27,16 +28,16 @@ type Light struct {
 }
 
 type Lighter struct {
-	l              *zap.Logger
+	log            *zap.Logger
 	lightsOffDelay time.Duration
 	lights         []*Light
 	scheduledOff   bool
 	cancel         context.CancelFunc
 }
 
-func NewLighter(l *zap.Logger, lightsOffDelay time.Duration, addrByPosition map[LightPosition]string) *Lighter {
+func NewLighter(log *zap.Logger, lightsOffDelay time.Duration, addrByPosition map[LightPosition]string) *Lighter {
 	lighter := &Lighter{
-		l:              l,
+		log:            log,
 		lightsOffDelay: lightsOffDelay,
 		scheduledOff:   false,
 	}
@@ -54,8 +55,9 @@ func NewLighter(l *zap.Logger, lightsOffDelay time.Duration, addrByPosition map[
 	return lighter
 }
 
+// EnterRoom turns the lights on when someone enters the room for the first time
 func (s *Lighter) EnterRoom(ctx context.Context) error {
-	s.l.Info("EnterRoom")
+	s.log.Info("EnterRoom")
 
 	if s.scheduledOff {
 		// If scheduled to be switched off, simply cancel the schedule
@@ -64,16 +66,40 @@ func (s *Lighter) EnterRoom(ctx context.Context) error {
 		return nil
 	}
 
+	var wg sync.WaitGroup
+	errs := make(chan error, len(s.lights))
+	// Turn lights on
+	for _, light := range s.lights {
+		wg.Add(1)
+		go func(light *Light, wg *sync.WaitGroup) {
+			s.log.Info("Turn light on",
+				zap.Any("light", light),
+			)
+			defer wg.Done()
+			errs <- light.Bulb.SetPower(true)
+			return
+		}(light, &wg)
+	}
+
+	wg.Wait()
+	for err := range errs {
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
 	return nil
 }
 
+// LeaveRoom schedules the lights to be turned when the last person leaves the room
 func (s *Lighter) LeaveRoom(ctx context.Context) error {
-	s.l.Info("LeaveRoom")
+	s.log.Info("LeaveRoom")
 	s.scheduledOff = true
 
 	lightCtx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
-	s.scheduleLightsOff(lightCtx)
+	go func() {
+		s.scheduleLightsOff(lightCtx)
+	}()
 
 	return nil
 }
@@ -85,13 +111,15 @@ func (s *Lighter) scheduleLightsOff(ctx context.Context) error {
 			return nil
 		case <-time.After(s.lightsOffDelay):
 			for _, light := range s.lights {
-				s.l.Info("Turn light off",
+				s.log.Info("Turn light off",
 					zap.Any("light", light),
 				)
 				if err := light.Bulb.SetPower(false); err != nil {
-					return errors.Wrapf(err, "%s light", light.Position)
+					return errors.Wrapf(err, "%d light", light.Position)
 				}
 			}
+			s.scheduledOff = false
+			return nil
 		}
 	}
 }
