@@ -48,7 +48,7 @@ func (s *Server) DetectMovement(ctx context.Context, r *pb.DetectMovementRequest
 		}
 
 		// The person is going out
-		if s.counter != 0 {
+		if s.counter > 0 {
 			s.counter--
 		}
 		s.l.Info("Out",
