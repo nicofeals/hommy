@@ -38,7 +38,7 @@ blocks:
       jobs:
         - name: Vet & Lint
           commands:
-            - golangci-lint run --deadline 5m0s --skip-dirs=vendor/* --skip-dirs=cmd/bb-scripts/* --print-resources-usage -v --enable=misspell --enable=unconvert
+            - golangci-lint run --deadline 5m0s
   - name: Test
     task:
       prologue:

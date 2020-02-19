@@ -1,12 +1,10 @@
 package main
 
 import (
-	"crypto/tls"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/go-pg/pg"
 	"github.com/nicofeals/hommy/common/config"
 	"github.com/urfave/cli"
 )
@@ -24,18 +22,6 @@ func getEnvironment(c *cli.Context) string {
 
 func getLogLevel(c *cli.Context) string {
 	return strings.TrimSpace(c.GlobalString("level"))
-}
-
-func getPostgresOptions(c *cli.Context) *pg.Options {
-	return &pg.Options{
-		Addr:     strings.TrimSpace(c.GlobalString("pg-addr")),
-		User:     strings.TrimSpace(c.GlobalString("pg-user")),
-		Password: strings.TrimSpace(c.GlobalString("pg-password")),
-		Database: strings.TrimSpace(c.GlobalString("pg-database")),
-		TLSConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-	}
 }
 
 func getLightsOffDelay(c *cli.Context) time.Duration {

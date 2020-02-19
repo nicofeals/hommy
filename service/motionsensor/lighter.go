@@ -77,7 +77,6 @@ func (s *Lighter) EnterRoom(ctx context.Context) error {
 			)
 			defer wg.Done()
 			errs <- light.Bulb.SetPower(true)
-			return
 		}(light, &wg)
 	}
 
@@ -98,7 +97,7 @@ func (s *Lighter) LeaveRoom(ctx context.Context) error {
 	lightCtx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 	go func() {
-		s.scheduleLightsOff(lightCtx)
+		_ = s.scheduleLightsOff(lightCtx)
 	}()
 
 	return nil
