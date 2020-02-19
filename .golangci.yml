@@ -1,7 +1,0 @@
-run:
-    # default concurrency is a available CPU number
-    concurrency: 4
-    timeout: 1m
-    modules-download-mode: vendor
-    # used to skip vendor
-    skip-dirs-use-default: true
