@@ -1,0 +1,6 @@
+run:
+    # default concurrency is a available CPU number
+    concurrency: 4
+    timeout: 1m
+    # used to skip vendor
+    skip-dirs-use-default: true
