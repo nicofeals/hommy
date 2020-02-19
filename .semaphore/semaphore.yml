@@ -38,7 +38,7 @@ blocks:
       jobs:
         - name: Vet & Lint
           commands:
-            - golangci-lint run --deadline 5m0s
+            - golangci-lint run --deadline 5m0s --skip-dirs=vendor/*
   - name: Test
     task:
       prologue:
