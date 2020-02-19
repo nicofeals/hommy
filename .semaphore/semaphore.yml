@@ -5,34 +5,37 @@ agent:
     type: e1-standard-2
     os_image: ubuntu1804
 blocks:
-  - name: Dependencies
+  - name: Warm Cache Dependencies
     task:
+      prologue:
+        commands:
+          # Go project boiler plate
+          - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+          - export "PATH=$(go env GOPATH)/bin:${PATH}"
+          - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
+          # Dep install db
+          - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          - checkout
       jobs:
         - name: Install dependencies
           commands:
             - cache restore deps-$(checksum Gopkg.lock)
             - dep ensure -v
             - cache store deps-$(checksum Gopkg.lock) vendor
-      prologue:
-        commands:
-          - sem-version go 1.11
-          - export GO111MODULE=on
-          - export GOPATH=~/go
-          - 'export PATH=/home/semaphore/go/bin:$PATH'
-          - checkout
-    dependencies: []
   - name: Linters
     dependencies:
-      - Dependencies
+      - Warm Cache Dependencies
     task:
       prologue:
         commands:
+          # Go project boiler plate
+          - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+          - export "PATH=$(go env GOPATH)/bin:${PATH}"
+          - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
           - sem-version go 1.11
-          - export GO111MODULE=on
-          - export GOPATH=~/go
-          - 'export PATH=/home/semaphore/go/bin:$PATH'
           - checkout
           - cache restore deps-$(checksum Gopkg.lock)
+          # Install golangci-lint
           - 'curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.17.1'
       jobs:
         - name: Vet & Lint
@@ -44,17 +47,18 @@ blocks:
     task:
       prologue:
         commands:
-          - sem-version go 1.11
-          - export GO111MODULE=on
-          - export GOPATH=~/go
-          - 'export PATH=/home/semaphore/go/bin:$PATH'
-          - checkout
-          - cache restore deps-$(checksum Gopkg.lock)
+         # Go project boiler plate
+         - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+         - export "PATH=$(go env GOPATH)/bin:${PATH}"
+         - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
+         - sem-version go 1.11
+         - checkout
+         - cache restore deps-$(checksum Gopkg.lock)
+      jobs:
+        - name: Test hommy Packages
+          commands:
+            - go test -v -race ./...
       epilogue:
         on_pass:
           commands:
-            - 'bash <(curl -s https://codecov.io/bash) -t ${CODECOV}'
-      jobs:
-        - name: Unit Test of Packages
-          commands:
-            - go test -v -race ./...
+            - bash <(curl -s https://codecov.io/bash) -t ${CODECOV}
