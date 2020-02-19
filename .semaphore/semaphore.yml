@@ -23,8 +23,6 @@ blocks:
             - dep ensure -v
             - cache store deps-$(checksum Gopkg.lock) vendor
   - name: Linters
-    dependencies:
-      - Warm Cache Dependencies
     task:
       prologue:
         commands:
@@ -42,8 +40,6 @@ blocks:
           commands:
             - golangci-lint run --deadline 5m0s --skip-dirs=vendor/* --skip-dirs=cmd/bb-scripts/* --print-resources-usage -v --enable=misspell --enable=unconvert
   - name: Test
-    dependencies:
-      - Linters
     task:
       prologue:
         commands:
