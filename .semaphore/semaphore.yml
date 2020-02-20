@@ -1,0 +1,60 @@
+version: v1.0
+name: Go
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+blocks:
+  - name: Warm Cache Dependencies
+    task:
+      prologue:
+        commands:
+          # Go project boiler plate
+          - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+          - export "PATH=$(go env GOPATH)/bin:${PATH}"
+          - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
+          # Dep install db
+          - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          - checkout
+      jobs:
+        - name: Install dependencies
+          commands:
+            - cache restore deps-$SEMAPHORE_GIT_BRANCH-$(checksum Gopkg.lock),deps-$SEMAPHORE_GIT_BRANCH,deps-master
+            - dep ensure -v
+            - cache store deps-$SEMAPHORE_GIT_BRANCH-$(checksum Gopkg.lock) vendor
+  - name: Linters
+    task:
+      prologue:
+        commands:
+          # Go project boiler plate
+          - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+          - export "PATH=$(go env GOPATH)/bin:${PATH}"
+          - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
+          - sem-version go 1.11
+          - checkout
+          - cache restore deps-$SEMAPHORE_GIT_BRANCH-$(checksum Gopkg.lock),deps-$SEMAPHORE_GIT_BRANCH,deps-master
+          # Install golangci-lint
+          - 'curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | BINARY=golangci-lint sh -s -- -b $(go env GOPATH)/bin v1.17.1'
+      jobs:
+        - name: Vet & Lint
+          commands:
+            - golangci-lint run --deadline 2m0s --skip-dirs=vendor/*
+  - name: Test
+    task:
+      prologue:
+        commands:
+         # Go project boiler plate
+         - export "SEMAPHORE_GIT_DIR=$(go env GOPATH)/src/github.com/nicofeals/${SEMAPHORE_PROJECT_NAME}"
+         - export "PATH=$(go env GOPATH)/bin:${PATH}"
+         - mkdir -vp "${SEMAPHORE_GIT_DIR}" "$(go env GOPATH)/bin"
+         - sem-version go 1.11
+         - checkout
+         - cache restore deps-$SEMAPHORE_GIT_BRANCH-$(checksum Gopkg.lock),deps-$SEMAPHORE_GIT_BRANCH,deps-master
+      jobs:
+        - name: Test hommy Packages
+          commands:
+            - go test -v -race ./...
+      epilogue:
+        on_pass:
+          commands:
+            - bash <(curl -s https://codecov.io/bash) -t ${CODECOV}

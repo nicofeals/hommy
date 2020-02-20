@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package nicofeals.hommy.motion_sensor;
+
+option go_package = "motion_sensor";
+
+service MotionSensor {
+    // DetectMovement is triggered by one of the motion sensors when movement is detected
+    rpc DetectMovement (DetectMovementRequest) returns (DetectMovementResponse);
+}
+
+enum Position {
+    POSITION_UNSPECIFIED = 0;
+    DOOR = 1;
+    DESK = 2;
+}
+
+message DetectMovementRequest {
+    Position position = 1;
+}
+
+message DetectMovementResponse {
+    Position position = 1;
+}
