@@ -18,3 +18,5 @@ _tools/
 tools.json
 vendor/
 cmd
+# build script that builds for pi and transfers it over ssh
+build.sh

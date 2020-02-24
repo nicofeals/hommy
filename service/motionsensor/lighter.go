@@ -94,7 +94,7 @@ func (s *Lighter) LeaveRoom(ctx context.Context) error {
 	s.log.Info("LeaveRoom")
 	s.scheduledOff = true
 
-	lightCtx, cancel := context.WithCancel(ctx)
+	lightCtx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
 	go func() {
 		_ = s.scheduleLightsOff(lightCtx)
@@ -104,18 +104,32 @@ func (s *Lighter) LeaveRoom(ctx context.Context) error {
 }
 
 func (s *Lighter) scheduleLightsOff(ctx context.Context) error {
+	s.log.Info("Schedule lights to turn off in " + s.lightsOffDelay.String())
 	for {
 		select {
 		case <-ctx.Done():
+			s.log.Info("Cancel turn off schedule")
 			return nil
 		case <-time.After(s.lightsOffDelay):
+			var wg sync.WaitGroup
+			errs := make(chan error, len(s.lights))
+
 			for _, light := range s.lights {
-				s.log.Info("Turn light off",
-					zap.Any("light", light),
-				)
-				if err := light.Bulb.SetPower(false); err != nil {
-					return errors.Wrapf(err, "%d light", light.Position)
-				}
+				wg.Add(1)
+				go func(light *Light, wg *sync.WaitGroup) {
+					s.log.Info("Turn light off",
+						zap.Any("light", light),
+					)
+					defer wg.Done()
+					errs <- light.Bulb.SetPower(false)
+					// if err := light.Bulb.SetPower(false); err != nil {
+					// 	return errors.Wrapf(err, "%d light", light.Position)
+					// }
+				}(light, &wg)
+			}
+			wg.Wait()
+			if err := <-errs; err != nil {
+				return errors.WithStack(err)
 			}
 			s.scheduledOff = false
 			return nil
