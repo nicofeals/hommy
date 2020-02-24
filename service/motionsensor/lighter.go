@@ -81,11 +81,11 @@ func (s *Lighter) EnterRoom(ctx context.Context) error {
 	}
 
 	wg.Wait()
-	for err := range errs {
-		if err != nil {
-			return errors.WithStack(err)
-		}
+	// If an error has been added to the channel, return it
+	if err := <-errs; err != nil {
+		return errors.WithStack(err)
 	}
+
 	return nil
 }
 
