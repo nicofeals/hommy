@@ -46,11 +46,15 @@ func (s *Server) DetectMovement(ctx context.Context, r *pb.DetectMovementRequest
 			s.doorSensorActive = true
 			return
 		}
+		if s.counter == 0 {
+			s.deskSensorActive = false
+			// There's already no one in the room and someone has just gone out...
+			return
+		}
 
 		// The person is going out
-		if s.counter > 0 {
-			s.counter--
-		}
+		s.counter--
+
 		s.l.Info("Out",
 			zap.Uint32("counter", s.counter),
 		)
