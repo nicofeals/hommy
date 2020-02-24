@@ -104,6 +104,7 @@ func (s *Lighter) LeaveRoom(ctx context.Context) error {
 }
 
 func (s *Lighter) scheduleLightsOff(ctx context.Context) error {
+	s.log.Info("Schedule lights to turn off in " + s.lightsOffDelay.String())
 	for {
 		select {
 		case <-ctx.Done():
